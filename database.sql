@@ -1,0 +1,1 @@
+SELECT * FROM duan_qlluongmuakv.users;

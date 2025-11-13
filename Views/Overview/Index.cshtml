@@ -1,0 +1,139 @@
+@{
+    ViewData["Title"] = "Tổng quan lượng mưa";
+}
+
+<div class="text-center mb-4">
+    <h2 class="text-primary fw-bold">
+        🌧 TỔNG QUAN LƯỢNG MƯA KHU VỰC (Cập nhật: @DateTime.Now.ToString("dd/MM/yyyy HH:mm"))
+    </h2>
+    <button class="btn btn-success btn-sm" onclick="location.reload()">🔄 Làm mới dữ liệu</button>
+</div>
+
+<!-- Biểu đồ cột -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white fw-bold">
+        BIỂU ĐỒ LƯỢNG MƯA MỚI NHẤT TẠI 20 TRẠM (mm)
+    </div>
+    <div class="card-body">
+        <canvas id="rainChart" height="100"></canvas>
+    </div>
+</div>
+
+<!-- Bảng chú thích -->
+<div class="card mb-4">
+    <div class="card-header fw-bold" style="background-color:#343a40; color:white;">
+        🌧 CHÚ THÍCH MỨC LƯỢNG MƯA
+    </div>
+    <div class="card-body p-0">
+        <table style="width:100%; border-collapse: collapse; text-align:center;">
+            <thead>
+                <tr>
+                    <th style="padding:8px; border:1px solid #ccc;">Màu</th>
+                    <th style="padding:8px; border:1px solid #ccc;">Mức mưa (mm)</th>
+                    <th style="padding:8px; border:1px solid #ccc;">Mô tả & Cảnh báo</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="background-color:#2F2F2F; color:white;">
+                    <td style="padding:8px; border:1px solid #ccc;">Không mưa</td>
+                    <td style="padding:8px; border:1px solid #ccc;">0 mm</td>
+                    <td style="padding:8px; border:1px solid #ccc;">Bình thường</td>
+                </tr>
+                <tr style="background-color:#87CEFA; color:black;">
+                    <td style="padding:8px; border:1px solid #ccc;">Mưa nhỏ</td>
+                    <td style="padding:8px; border:1px solid #ccc;">0 - 10 mm</td>
+                    <td style="padding:8px; border:1px solid #ccc;">Nhẹ, không ảnh hưởng</td>
+                </tr>
+                <tr style="background-color:#32CD32; color:black;">
+                    <td style="padding:8px; border:1px solid #ccc;">Mưa vừa</td>
+                    <td style="padding:8px; border:1px solid #ccc;">10 - 50 mm</td>
+                    <td style="padding:8px; border:1px solid #ccc;">Ngập cục bộ</td>
+                </tr>
+                <tr style="background-color:#FFA500; color:black;">
+                    <td style="padding:8px; border:1px solid #ccc;">Mưa to</td>
+                    <td style="padding:8px; border:1px solid #ccc;">50 - 100 mm</td>
+                    <td style="padding:8px; border:1px solid #ccc;">Cảnh báo ngập, lũ nhỏ</td>
+                </tr>
+                <tr style="background-color:#FF0000; color:white;">
+                    <td style="padding:8px; border:1px solid #ccc;">Mưa rất to</td>
+                    <td style="padding:8px; border:1px solid #ccc;">> 100 mm</td>
+                    <td style="padding:8px; border:1px solid #ccc;">Nguy cơ lũ quét, sạt lở</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Bản đồ OpenStreetMap -->
+<div class="card">
+    <div class="card-header bg-info text-white fw-bold">
+        🗺 BẢN ĐỒ TRẠM QUAN TRẮC LƯỢNG MƯA (Click marker để xem chi tiết)
+    </div>
+    <div class="card-body">
+        <div id="map" style="height:600px; border-radius:8px;"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <script>
+        // Biểu đồ cột
+        var ctx = document.getElementById('rainChart').getContext('2d');
+        var chartData = @Html.Raw(ViewBag.ChartData);
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartData.map(x => x.tentram),
+                datasets: [{
+                    label: 'Lượng mưa (mm)',
+                    data: chartData.map(x => x.luongmua),
+                    backgroundColor: chartData.map(x => x.color),
+                    borderColor: '#01579b',
+                    borderWidth: 2,
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Lượng mưa: ' + context.parsed.y + ' mm';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'mm' } }
+                }
+            }
+        });
+
+        // Bản đồ OSM với marker màu đồng bộ
+        var map = L.map('map').setView([10.762, 106.660], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        var stations = @Html.Raw(ViewBag.Stations);
+        stations.forEach(function(s) {
+            var marker = L.circleMarker([parseFloat(s.lat), parseFloat(s.lng)], {
+                radius: 10,
+                fillColor: s.color,
+                color: '#ffffff',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.9
+            }).addTo(map);
+
+            marker.bindPopup(
+                `<b>${s.tentram}</b><br>${s.diachi}<br><b>Lượng mưa: ${s.luongmua} mm</b><br>Thời gian: ${s.thoigian}`
+            );
+        });
+    </script>
+}

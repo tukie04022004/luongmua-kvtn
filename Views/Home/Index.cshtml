@@ -1,0 +1,39 @@
+﻿@{
+    ViewData["Title"] = "Trang chủ";
+}
+
+<div class="text-center py-5">
+    <h1 class="display-4 text-primary fw-bold">🌧 HỆ THỐNG QUẢN LÝ LƯỢNG MƯA KHU VỰC</h1>
+    <p class="lead">KTTV KHU VỰC TÂY NAM BỘ - ĐÀI KHÍ TƯỢNG THỦY VĂN KHU VỰC</p>
+    <hr class="my-4">
+    <p class="fs-4">Hệ thống cung cấp dữ liệu lượng mưa realtime từ <strong>20 trạm quan trắc</strong> trên toàn khu vực<br>
+    Bao gồm: Bản đồ GIS, biểu đồ 5 cấp cảnh báo, báo cáo Excel, dự báo mưa bão</p>
+    <a class="btn btn-primary btn-lg mt-3" asp-controller="Overview" asp-action="Index">Xem Tổng quan ngay 🌧</a>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card h-100 text-center">
+            <div class="card-body">
+                <h5 class="card-title text-success">📊 Biểu đồ 5 cấp màu</h5>
+                <p class="card-text">Cảnh báo mưa từ xanh nhạt (≤10mm) đến đỏ (>200mm - lũ quét)</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 text-center">
+            <div class="card-body">
+                <h5 class="card-title text-info">🗺 Bản đồ 20 trạm</h5>
+                <p class="card-text">Marker realtime từ Phú Quốc đến Huế với popup lượng mưa</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 text-center">
+            <div class="card-body">
+                <h5 class="card-title text-warning">📈 Báo cáo Excel</h5>
+                <p class="card-text">Xuất dữ liệu 15 ngày, 30 ngày, 1 năm tự động</p>
+            </div>
+        </div>
+    </div>
+</div>

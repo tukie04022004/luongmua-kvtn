@@ -1,0 +1,26 @@
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white text-center">
+                <h4>🌧 ĐĂNG NHẬP HỆ THỐNG QUẢN LÝ LƯỢNG MƯA KHU VỰC HƠN</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Login" method="post">
+                    <div class="mb-3">
+                        <label class="form-label">User ID</label>
+                        <input name="userid" class="form-control" placeholder="admin" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mật khẩu</label>
+                        <input type="password" name="matkhau" class="form-control" placeholder="123" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Đăng nhập 🌧</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,83 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - HỆ THỐNG QUẢN LÝ LƯỢNG MƯA KHU VỰC</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="icon" href="https://img.icons8.com/fluency/48/000000/rain.png" type="image/png">
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #e0f7fa, #ffffff);
+        }
+
+        main {
+            flex: 1; /* Chiếm phần còn lại */
+        }
+
+        .navbar { background-color: #0277bd !important; }
+        .footer { background-color: #01579b; color: white; }
+        .card { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-dark">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold" href="/">
+                    <img src="https://img.icons8.com/fluency/32/ffffff/rain.png" alt="Mưa"> QUẢN LÝ LƯỢNG MƯA KHU VỰC
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Overview" asp-action="Index">Tổng quan</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Detail" asp-action="Index">Chi tiết trạm</a></li>
+                    </ul>
+                    @if (Context.Session.GetString("UserId") != null)
+                    {
+                        <span class="navbar-text text-white me-3">
+                            🌧 Xin chào, <strong>@Context.Session.GetString("UserId")</strong>!
+                        </span>
+                        <a class="btn btn-outline-light btn-sm" asp-controller="Account" asp-action="Logout">Đăng xuất</a>
+                    }
+                    else
+                    {
+                        <a class="btn btn-outline-light btn-sm" asp-controller="Account" asp-action="Login">Đăng nhập</a>
+                    }
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main role="main" class="container mt-4 mb-5">
+        @RenderBody()
+    </main>
+
+    <footer class="footer py-4">
+        <div class="container text-center">
+            <p class="mb-0">© 2025 - <strong>HỆ THỐNG QUẢN LÝ LƯỢNG MƯA KHU VỰC - KTTV KVTN</strong><br>
+            Phát triển bởi đội ngũ sinh viên Việt Nam - Phiên bản 2.0 - Dữ liệu realtime từ 20 trạm quan trắc</p>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

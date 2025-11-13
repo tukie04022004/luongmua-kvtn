@@ -1,0 +1,172 @@
+@using Newtonsoft.Json
+@model dynamic
+
+@{
+    ViewData["Title"] = "Chi tiết trạm lượng mưa";
+
+    // Hàm lấy màu theo mức độ mưa
+    string GetRainColor(double rain)
+    {
+        if (rain > 100) return "#FF0000";      // Mưa rất to - đỏ
+        if (rain > 50)  return "#FFA500";      // Mưa to - cam
+        if (rain > 10)  return "#32CD32";      // Mưa vừa - xanh lá
+        if (rain > 0)   return "#87CEFA";      // Mưa nhỏ - xanh biển nhạt
+        return "#2F4F4F";                      // Không mưa - đen khói
+    }
+
+    string GetRainLevel(double rain)
+    {
+        if (rain > 100) return "RẤT TO";
+        if (rain > 50)  return "TO";
+        if (rain > 10)  return "VỪA";
+        if (rain > 0)   return "NHỎ";
+        return "KHÔNG MƯA";
+    }
+}
+
+<div class="text-center mb-4">
+    <h2 class="text-primary fw-bold">🌧 CHI TIẾT LƯỢNG MƯA KHU VỰC</h2>
+</div>
+
+<!-- FORM LỌC -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white fw-bold">🔍 LỌC DỮ LIỆU</div>
+    <div class="card-body">
+        <form asp-action="Index" method="get">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label fw-bold">Trạm:</label>
+                    <select name="matram" class="form-select form-select-lg" onchange="this.form.submit()">
+                        <option value="">-- Chọn trạm --</option>
+                        @if (ViewBag.Trams != null)
+                        {
+                            foreach (var tram in ViewBag.Trams as List<KttvKvtnWeb.Models.TramKttvtn>)
+                            {
+                                if (ViewBag.MaTram == tram.Matram)
+                                {
+                                    <option selected value="@tram.Matram">@tram.Tentram</option>
+                                }
+                                else
+                                {
+                                    <option value="@tram.Matram">@tram.Tentram</option>
+                                }
+                            }
+                        }
+                    </select>
+
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Từ:</label>
+                    <input type="date" name="from" class="form-control" value="@ViewBag.FromDate" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Đến:</label>
+                    <input type="date" name="to" class="form-control" value="@ViewBag.ToDate" />
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary w-100">Tìm</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (ViewBag.Data != null && ViewBag.Data.Count > 0)
+{
+    <!-- BIỂU ĐỒ LINE CHART -->
+    <div class="card mt-4">
+        <div class="card-header bg-warning text-dark fw-bold d-flex justify-content-between align-items-center">
+            <span>📈 @ViewBag.TenTram (@ViewBag.Data.Count bản ghi)</span>
+            <a asp-action="ExportExcel" 
+               asp-route-matram="@ViewBag.MaTram" 
+               asp-route-from="@ViewBag.FromDate" 
+               asp-route-to="@ViewBag.ToDate" 
+               class="btn btn-success btn-lg">📥 XUẤT EXCEL</a>
+        </div>
+        <div class="card-body">
+            <canvas id="lineChart" height="120"></canvas>
+        </div>
+    </div>
+
+    <!-- 10 BẢN GHI MỚI NHẤT -->
+    <div class="card mt-4">
+        <div class="card-header bg-info text-white">📋 10 BẢN GHI MỚI NHẤT</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Thời gian</th>
+                            <th>mm</th>
+                            <th>PE</th>
+                            <th>Lưu lượng</th>
+                            <th>Cấp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in (ViewBag.Data as List<KttvKvtnWeb.Models.CwtDomua>).Take(10))
+                        {
+                            DateTime dt;
+                            if (!DateTime.TryParse(item.Thoigian?.ToString(), out dt)) dt = DateTime.MinValue;
+
+                            <tr>
+                                <td>@(dt != DateTime.MinValue ? dt.ToString("dd/MM HH:mm") : item.Thoigian)</td>
+                                <td class="fw-bold">@item.Luongmua</td>
+                                <td>@item.Pe</td>
+                                <td>@item.Luuluong</td>
+                                <td>
+                                    <span class="badge" style="background-color:@GetRainColor(item.Luongmua); color:white;">
+                                        @GetRainLevel(item.Luongmua)
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        @if (ViewBag.Data != null && ViewBag.Data.Count > 0)
+        {
+            <text>
+            const lineData = @Html.Raw(JsonConvert.SerializeObject(ViewBag.Data));
+            const lineLabels = lineData.map(x => new Date(x.Thoigian).toLocaleString('vi-VN'));
+            const lineValues = lineData.map(x => x.Luongmua);
+
+            // Màu điểm đồng bộ với badge & chú thích
+            const lineColors = lineData.map(x => {
+                const rain = x.Luongmua;
+                if (rain > 100) return '#FF0000';
+                if (rain > 50) return '#FFA500';
+                if (rain > 10) return '#32CD32';
+                if (rain > 0) return '#87CEFA';
+                return '#2F4F4F';
+            });
+
+            const ctxLine = document.getElementById('lineChart').getContext('2d');
+            new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: lineLabels,
+                    datasets: [{
+                        label: 'Lượng mưa (mm)',
+                        data: lineValues,
+                        borderColor: '#0277bd',
+                        backgroundColor: 'rgba(2, 119, 189, 0.2)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: lineColors,
+                        pointRadius: 6
+                    }]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
+            </text>
+        }
+    </script>
+}
