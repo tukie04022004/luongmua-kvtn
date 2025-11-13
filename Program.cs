@@ -1,22 +1,38 @@
 using KttvKvtnWeb.Data;
 using Microsoft.EntityFrameworkCore;
-using OfficeOpenXml;  // ← THÊM DÒNG NÀY!
+using OfficeOpenXml;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure; // ← CẦN THÊM DÒNG NÀY!
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services
-builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
-        new MySqlServerVersion(new Version(5, 5, 54))));
+// === CẤU HÌNH EPPLUS (XUẤT EXCEL) ===
+ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
+// === CẤU HÌNH DB VỚI RETRY + TIMEOUT + SSL ===
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseMySql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")),
+        mysqlOptions =>
+        {
+            // BẬT RETRY KHI MẤT KẾT NỐI (Railway proxy hay chập chờn)
+            mysqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorNumbersToAdd: null);
+
+            // TĂNG TIMEOUT LÊN 60 GIÂY
+            mysqlOptions.CommandTimeout(60);
+        }));
+
+// === CÁC SERVICE KHÁC ===
+builder.Services.AddControllersWithViews();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession();
 
-ExcelPackage.LicenseContext = LicenseContext.NonCommercial; // Đã có using nên OK
-
 var app = builder.Build();
 
+// === MIDDLEWARE ===
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
