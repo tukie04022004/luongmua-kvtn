@@ -1,51 +1,67 @@
-using KttvKvtnWeb.Data;
 using Microsoft.EntityFrameworkCore;
-using OfficeOpenXml;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// === CẤU HÌNH EPPLUS (XUẤT EXCEL) ===
-ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+// Lấy connection string từ Environment Variable trước, fallback về appsettings.json
+var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION") 
+                       ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
-// === CẤU HÌNH DB: FIX TIMEOUT + RETRY + LOẠI BỎ ConnectionStringBuilder ===
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        new MySqlServerVersion(new Version(8, 0, 36)), // DÙNG PHIÊN BẢN CỐ ĐỊNH
-        mysqlOptions =>
-        {
-            // BẬT RETRY KHI MẤT KẾT NỐI
-            mysqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 10,
-                maxRetryDelay: TimeSpan.FromSeconds(30),
-                errorNumbersToAdd: null);
+// Kiểm tra connection string
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new Exception("Connection string not found. Set DB_CONNECTION environment variable.");
+}
 
-            // TĂNG COMMAND TIMEOUT LÊN 5 PHÚT
-            mysqlOptions.CommandTimeout(300);
-        }));
+// Thêm DbContext (EF Core) nếu dùng MySQL
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+);
 
-// === CÁC SERVICE KHÁC ===
+// Thêm dịch vụ MVC / Razor Pages / API
 builder.Services.AddControllersWithViews();
-builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession();
 
 var app = builder.Build();
 
-// === MIDDLEWARE ===
+// Middleware
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+else
+{
+    app.UseDeveloperExceptionPage(); // Hiển thị lỗi chi tiết khi Development
+}
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-app.UseSession();
 app.UseAuthorization();
 
+// Map routes
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}"
+);
 
 app.Run();
+
+// ===== DbContext mẫu =====
+public class AppDbContext : DbContext
+{
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    {
+    }
+
+    // Ví dụ table Products
+    public DbSet<Product> Products { get; set; } = null!;
+}
+
+// ===== Entity mẫu =====
+public class Product
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+}
