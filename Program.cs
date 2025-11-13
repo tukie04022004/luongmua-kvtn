@@ -1,28 +1,27 @@
 using KttvKvtnWeb.Data;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
-using Pomelo.EntityFrameworkCore.MySql.Infrastructure; // ← CẦN THÊM DÒNG NÀY!
 
 var builder = WebApplication.CreateBuilder(args);
 
 // === CẤU HÌNH EPPLUS (XUẤT EXCEL) ===
 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-// === CẤU HÌNH DB VỚI RETRY + TIMEOUT + SSL ===
+// === CẤU HÌNH DB: FIX TIMEOUT + RETRY + LOẠI BỎ ConnectionStringBuilder ===
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")),
+        new MySqlServerVersion(new Version(8, 0, 36)), // DÙNG PHIÊN BẢN CỐ ĐỊNH
         mysqlOptions =>
         {
-            // BẬT RETRY KHI MẤT KẾT NỐI (Railway proxy hay chập chờn)
+            // BẬT RETRY KHI MẤT KẾT NỐI
             mysqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 5,
-                maxRetryDelay: TimeSpan.FromSeconds(10),
+                maxRetryCount: 10,
+                maxRetryDelay: TimeSpan.FromSeconds(30),
                 errorNumbersToAdd: null);
 
-            // TĂNG TIMEOUT LÊN 60 GIÂY
-            mysqlOptions.CommandTimeout(60);
+            // TĂNG COMMAND TIMEOUT LÊN 5 PHÚT
+            mysqlOptions.CommandTimeout(300);
         }));
 
 // === CÁC SERVICE KHÁC ===
