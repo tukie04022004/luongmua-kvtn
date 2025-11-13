@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("KttvKvtnWeb")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1d60d252469bc4e56c2d02ebcd993b56fb8de8d9")]
 [assembly: System.Reflection.AssemblyProductAttribute("KttvKvtnWeb")]
 [assembly: System.Reflection.AssemblyTitleAttribute("KttvKvtnWeb")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
